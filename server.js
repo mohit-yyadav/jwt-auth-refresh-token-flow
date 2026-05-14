@@ -13,9 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
-app.use('/api/auth', authRoutes);
-
+app.use('/', authRoutes);
 
 app.get('/', (req, res) => {
     res.send('Welcome to the JWT Authentication API');

@@ -31,30 +31,47 @@ const generateRefreshToken = (user) =>{
 };
 
 
-exports.register = async (req,res) => {
+exports.register = async (req, res) => {
     try {
-        const {name , email, password} = req.body;
+        const {name, email, password} = req.body;
 
-        const existingUser = await User.findOne({email});
-
-        if(existingUser){
-            return res.status(400).json({message:'User already exists'});
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: 'Name, email and password are required' });
         }
 
-        const hashedPassword = await bcrypt.hash(password,10);
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = new User({
             name,
             email,
-            password:hashedPassword,
+            password: hashedPassword,
         });
 
+        const refreshToken = generateRefreshToken(user);
+        user.refreshToken = refreshToken;
+        await user.save();
+
+        const accessToken = generateAccessToken(user);
+
         res.status(201).json({
-            success:true,
-            message:'User registered successfully',
-            user,});
+            success: true,
+            message: 'User registered successfully',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+            },
+            accessToken,
+            refreshToken,
+        });
     } catch (error) {
-        res.status(500).json({message:'Internal server error'});
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
